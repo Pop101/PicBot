@@ -12,12 +12,13 @@ except ImportError: from yaml import Loader
 
 # load the config
 config = dict()
-with open('./config-actual.yml') as file:
+with open('./config.yml') as file:
     yml = yaml.load(file.read(), Loader=Loader)
     try:
         config['token'] = yml['Token']
         config['key'] = yml['Pixabay Key']
         config['min'] = yml['Minimum Word Length']
+        config['chance'] = yml['Chance']
     except (KeyError, ValueError): 
         print('Error in config')
         quit(1)
@@ -33,6 +34,8 @@ async def on_ready():
 # for every message it does these checks
 @bot.event
 async def on_message(message):
+    if random.random() > config['chance']: return
+
     # detect all reactions
     found_nouns = list()
 
