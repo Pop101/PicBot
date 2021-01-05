@@ -65,7 +65,7 @@ async def on_message(message):
         for i in range(len(adjs)-1, -1, -1):
             img = img_text.demo_text(img, adjs[i], size=20/(len(adjs[i])+1)+0.5, n_start=i*2)
     else:
-        img = img_text.demo_text(img, adj_only, size=20/(len(adj_only)+1)+0.5, n_start=i*2)
+        img = img_text.demo_text(img, adj_only, size=20/(len(adj_only)+1)+0.5)
     img = img_text.resize(img, px=600)
     
     # embed the image (https://jdhao.github.io/2019/07/06/python_opencv_pil_image_to_bytes/)
@@ -79,6 +79,9 @@ async def on_message(message):
     file = discord.File('yeet.png')
     embed = discord.Embed(title='You probably wanted...')
     embed.set_image(url='attachment://yeet.png')
+
+    col = img_text.resize(img, px=1)[0,0][0:3]
+    embed.colour = discord.Colour.from_rgb(int(col[0]), int(col[1]), int(col[2]))
     await message.channel.send(file = file, embed=embed)
 
 

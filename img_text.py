@@ -5,7 +5,8 @@ import cv2
 
 def resize(img, scale:float = 0.5, px:int = -1):
   if px >= 0: scale = px / max(img.shape[0:2])
-  return cv2.resize(img.copy(), (int(img.shape[1] * scale), int(img.shape[0] * scale)), interpolation = cv2.INTER_AREA)
+  if px > 1: return cv2.resize(img.copy(), (int(img.shape[1] * scale), int(img.shape[0] * scale)), interpolation = cv2.INTER_AREA)
+  else: return cv2.resize(img.copy(), (1, 1), interpolation = cv2.INTER_AREA)
 
 def black_border(img, scale:float = 0.09, px:int = -1):
   if px < 0: px = int(max(img.shape[0:2]) * scale)
