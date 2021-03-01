@@ -3,6 +3,7 @@ import random
 import cv2
 import io
 import time
+import re
 import nlp_analysis
 import img_text
 
@@ -17,8 +18,9 @@ with open('./config.yml') as file:
     try:
         config['token'] = yml['Token']
         config['key'] = yml['Pixabay Key']
-        config['min'] = yml['Minimum Word Length']
         config['chance'] = yml['Chance']
+        config['min'] = yml['Minimum Word Length']
+        config['del'] = True if 'true' in str(yml['Allow Deletion']).lower() else False
     except (KeyError, ValueError): 
         print('Error in config')
         quit(1)
@@ -36,10 +38,13 @@ async def on_ready():
 async def on_message(message):
     if random.random() > config['chance']: return
 
+    # parse discord message
+    content = re.sub(r'<.*?>|\'.*?\'|__.*?__|\*.*?\*|>.*?\n|{.*?}', '', message.content, re.S | re.M)
+
     # detect all reactions
     found_nouns = list()
 
-    for nouns in nlp_analysis.get_noun_phrases(message.content):
+    for nouns in nlp_analysis.get_noun_phrases(content):
         if len(nouns) < config['min']: continue
         found_nouns.append(nouns)
     
@@ -58,31 +63,34 @@ async def on_message(message):
 
     # generate the image
     img = img_text.cv_img_from_url(img_text.img_url_from_query(noun_only, config['key']))
-    img = img_text.cv_img_contrast(img, 1.2, -60) # ENHANCEEEE
-    
-    if False:
-        adjs = adj_only.split(' ')
-        for i in range(len(adjs)-1, -1, -1):
-            img = img_text.demo_text(img, adjs[i], size=20/(len(adjs[i])+1)+0.5, n_start=i*2)
-    else:
-        img = img_text.demo_text(img, adj_only, size=20/(len(adj_only)+1)+0.5)
-    img = img_text.resize(img, px=600)
-    
-    # embed the image (https://jdhao.github.io/2019/07/06/python_opencv_pil_image_to_bytes/)
-    #success, img_buf = cv2.imencode('.jpg', img)
-    #io_buf = io.BytesIO(img_buf)
-    #img_bytes = io_buf.getvalue()
-    #assert success
+    img = img_text.cv_img_contrast(img, 1.2, -60) # Enhance contrast
+    img = img_text.demo_text(img, adj_only, size=20/(len(adj_only)+1)+0.5) # Add text
+    img = img_text.resize(img, px=600) # Decrease size
 
     cv2.imwrite('yeet.png', img)
 
     file = discord.File('yeet.png')
-    embed = discord.Embed(title='You probably wanted...')
+    embed = discord.Embed(title=f'You probably wanted... {str(noun_phrase).title()}, description='React with ❌ to delete' if config['del'] else '')
     embed.set_image(url='attachment://yeet.png')
 
+    # resize to 1 px and get the color for the discord embed
     col = img_text.resize(img, px=1)[0,0][0:3]
     embed.colour = discord.Colour.from_rgb(int(col[0]), int(col[1]), int(col[2]))
+
+    # send the picture!
     await message.channel.send(file = file, embed=embed)
 
+@bot.event
+async def on_reaction_add(reaction, user): # Don't use raw here, as we want msg to expire
+    if not config['del']: return # must have enabled deletion
+    if user.bot: return # reactor must not be a bot
+    if reaction.message.author.id != bot.user.id: return # must be on your message
+    # Make sure this message is an image reaction
+    if len(reaction.message.embeds) == 0: return # must have an embed
+    if not 'yeet.png' in repr(reaction.message.embeds[0].image): return # make sure 
+
+    # if the reaction is an X, delete the message
+    if '❌' in reaction.emoji:
+        await reaction.message.delete()
 
 bot.run(config['token'])
