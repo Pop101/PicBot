@@ -70,7 +70,7 @@ async def on_message(message):
     cv2.imwrite('yeet.png', img)
 
     file = discord.File('yeet.png')
-    embed = discord.Embed(title=f'You probably wanted... {str(noun_phrase).title()}, description='React with ❌ to delete' if config['del'] else '')
+    embed = discord.Embed(title=f'You probably wanted... {str(noun_phrase).title()}', description='React with ❌ to delete' if config['del'] else '')
     embed.set_image(url='attachment://yeet.png')
 
     # resize to 1 px and get the color for the discord embed
