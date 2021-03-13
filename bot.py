@@ -67,18 +67,19 @@ async def on_message(message):
     img = img_text.demo_text(img, adj_only, size=20/(len(adj_only)+1)+0.5) # Add text
     img = img_text.resize(img, px=600) # Decrease size
 
-    cv2.imwrite('yeet.png', img)
+    cv2.imwrite('image.png', img)
 
-    file = discord.File('yeet.png')
+    file = discord.File('image.png')
     embed = discord.Embed(title='You probably wanted...', description=f'{str(noun_phrase).title()}\nReact with ❌ to delete' if config['del'] else f'{str(noun_phrase).title()}')
-    embed.set_image(url='attachment://yeet.png')
+    embed.set_image(url='attachment://image.png')
 
     # resize to 1 px and get the color for the discord embed
     col = img_text.resize(img, px=1)[0,0][0:3]
     embed.colour = discord.Colour.from_rgb(int(col[0]), int(col[1]), int(col[2]))
 
     # send the picture!
-    await message.channel.send(file = file, embed=embed)
+    msg = await message.channel.send(file = file, embed=embed)
+    if config['del']: await msg.add_reaction('❌')
 
 @bot.event
 async def on_reaction_add(reaction, user): # Don't use raw here, as we want msg to expire
@@ -87,7 +88,7 @@ async def on_reaction_add(reaction, user): # Don't use raw here, as we want msg 
     if reaction.message.author.id != bot.user.id: return # must be on your message
     # Make sure this message is an image reaction
     if len(reaction.message.embeds) == 0: return # must have an embed
-    if not 'yeet.png' in repr(reaction.message.embeds[0].image): return # make sure 
+    if not 'image.png' in repr(reaction.message.embeds[0].image): return # make sure 
 
     # if the reaction is an X, delete the message
     if '❌' in reaction.emoji:
